@@ -1,0 +1,79 @@
+﻿@page "/"
+@inject NavigationManager navigationManager
+@using Microsoft.AspNetCore.SignalR.Client;
+@using thoughts.app.Hubs;
+
+@if(hubConnection is null)
+{
+    StartThoughtSharing();
+}
+
+<div id="thoughtbox">
+    <input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })"/>
+
+    @{
+        var t = new List<Thought>(thoughts);
+        t.Reverse();
+        foreach (var item in t)
+        {
+            <h5>@item.Content</h5>
+        }
+    }
+    <hr />
+</div>
+
+@code {
+    private List<Thought> thoughts = new();
+    private string newThought;
+
+    private string hubUrl;
+    private HubConnection hubConnection;
+
+    public async Task StartThoughtSharing()
+    {
+        thoughts.Clear();
+
+        // Create the chat client
+        string baseUrl = navigationManager.BaseUri;
+
+        hubUrl = baseUrl.TrimEnd('/') + ThoughtHub.HubUrl;
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(hubUrl)
+            .Build();
+
+        hubConnection.On<string>("Share", OnThoughtShared);
+
+        await hubConnection.StartAsync();
+    }
+
+    private void OnThoughtShared(string thought)
+    {
+        thoughts.Add(new Thought(thought));
+
+        StateHasChanged();
+    }
+
+    private async Task DisconnectAsync()
+    {
+        await hubConnection.StopAsync();
+        await hubConnection.DisposeAsync();
+
+        hubConnection = null;
+    }
+
+    private async Task ShareThoughtAsync(string thought)
+    {
+        await hubConnection.SendAsync("Share", thought);
+    }
+
+    private class Thought
+    {
+        public Thought(string content)
+        {
+            Content = content;
+        }
+
+        public string Content { get; set; }
+    }
+}
