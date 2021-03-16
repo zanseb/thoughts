@@ -8,19 +8,16 @@
     StartThoughtSharing();
 }
 
-<div id="thoughtbox">
-    <input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })"/>
+<input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })"/>
 
-    @{
-        var t = new List<Thought>(thoughts);
-        t.Reverse();
-        foreach (var item in t)
-        {
-            <h5>@item.Content</h5>
-        }
+@{
+    var t = new List<Thought>(thoughts);
+    t.Reverse();
+    foreach (var item in t)
+    {
+        <h5>@item.Content</h5>
     }
-    <hr />
-</div>
+}
 
 @code {
     private List<Thought> thoughts = new();
