@@ -1,26 +1,31 @@
 ﻿@page "/"
 @inject NavigationManager navigationManager
+@using System.Timers;
 @using Microsoft.AspNetCore.SignalR.Client;
 @using thoughts.app.Hubs;
 
-@if(hubConnection is null)
+@if (hubConnection is null)
 {
     StartThoughtSharing();
 }
 
-<input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })"/>
+<input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @bind:event="oninput" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })" />
 
 @{
     var t = new List<Thought>(thoughts);
-    t.Reverse();
     foreach (var item in t)
     {
-        <h5>@item.Content</h5>
+        string position = $"absolute: relative; left:{item.PosLeft}px; top:{item.PosRight}px";
+        <h5 style="@position">@item.Content</h5>
     }
 }
 
 @code {
-    private List<Thought> thoughts = new();
+    private const int MaxThoughts = 100;
+    private TimeSpan VanishTime = TimeSpan.FromSeconds(10);
+
+    private Queue<Thought> thoughts = new();
+    private Timer vanishTimer;
     private string newThought;
 
     private string hubUrl;
@@ -28,6 +33,7 @@
 
     public async Task StartThoughtSharing()
     {
+        CreateVanishTimer();
         thoughts.Clear();
 
         // Create the chat client
@@ -44,9 +50,33 @@
         await hubConnection.StartAsync();
     }
 
+    private void CreateVanishTimer()
+    {
+        vanishTimer = new Timer(VanishTime.TotalMilliseconds);
+        vanishTimer.Elapsed += (sender, args) =>
+        {
+            if (thoughts.Count > 0)
+            {
+                thoughts.Dequeue();
+
+                InvokeAsync(() => StateHasChanged());
+            }
+        };
+        vanishTimer.Start();
+    }
+
     private void OnThoughtShared(string thought)
     {
-        thoughts.Add(new Thought(thought));
+
+        if (thoughts.Count > MaxThoughts)
+        {
+            thoughts.Dequeue();
+        }
+
+        var r = new Random();
+        int left = r.Next(1000);
+        int top = r.Next(1000);
+        thoughts.Enqueue(new Thought(thought, left, top));
 
         StateHasChanged();
     }
@@ -66,11 +96,17 @@
 
     private class Thought
     {
-        public Thought(string content)
+        public Thought(string content, int posLeft, int posRight)
         {
             Content = content;
+            PosLeft = posLeft;
+            PosRight = posRight;
         }
 
         public string Content { get; set; }
+
+        public int PosLeft { get; set; }
+
+        public int PosRight { get; set; }
     }
 }
