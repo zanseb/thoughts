@@ -9,20 +9,20 @@
     StartThoughtSharing();
 }
 
-<input id="thoughtinput" placeholder="What are you thinking about?" @bind="@newThought" @bind:event="oninput" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })" />
+<input id="thoughtinput" placeholder="What are you thinking about?" maxlength="50" @bind="@newThought" @bind:event="oninput" @onkeydown="@(async (e) => { if (e.Key is "Enter") { await ShareThoughtAsync(newThought); } })" />
 
 @{
     var t = new List<Thought>(thoughts);
     foreach (var item in t)
     {
-        string position = $"absolute: relative; left:{item.PosLeft}px; top:{item.PosRight}px";
+        string position = $"position: absolute; left:{item.PosLeft}%; top:{item.PosRight}%";
         <h5 style="@position">@item.Content</h5>
     }
 }
 
 @code {
     private const int MaxThoughts = 100;
-    private TimeSpan VanishTime = TimeSpan.FromSeconds(10);
+    private TimeSpan VanishTime = TimeSpan.FromSeconds(5);
 
     private Queue<Thought> thoughts = new();
     private Timer vanishTimer;
@@ -74,8 +74,8 @@
         }
 
         var r = new Random();
-        int left = r.Next(1000);
-        int top = r.Next(1000);
+        int left = r.Next(10, 90);
+        int top = r.Next(10, 90);
         thoughts.Enqueue(new Thought(thought, left, top));
 
         StateHasChanged();
@@ -91,7 +91,11 @@
 
     private async Task ShareThoughtAsync(string thought)
     {
-        await hubConnection.SendAsync("Share", thought);
+        newThought = string.Empty;
+        if (!string.IsNullOrEmpty(thought))
+        {
+            await hubConnection.SendAsync("Share", thought);
+        }
     }
 
     private class Thought
