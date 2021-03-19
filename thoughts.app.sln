@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "thoughts.app", "thoughts.app.csproj", "{0731785C-DB99-4819-9256-C7EF0A1495DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "thoughts.app", "src\thoughts.app.csproj", "{0731785C-DB99-4819-9256-C7EF0A1495DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
